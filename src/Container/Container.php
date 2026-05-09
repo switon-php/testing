@@ -44,7 +44,7 @@ use Switon\Testing\MockRandom;
  *
  * Use when tests need framework-like wiring with built-in defaults
  * (mock logger/console/random, test event dispatcher, in-memory context storage, real filesystem/class scanning/clock/app bindings).
- * Additional doubles such as `MockClock`, `MockListenerProvider`, and `MockCache`
+ * Additional test doubles such as `MockClock`, `MockListenerProvider`, and `MockCache`
  * are available for manual binding in test setup; they are not preconfigured here by default.
  *
  * @see \Switon\Testing\TestCase
