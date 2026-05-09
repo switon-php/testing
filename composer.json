@@ -1,0 +1,40 @@
+{
+  "name": "switon/testing",
+  "description": "Shared test bootstrap and utilities for Switon Framework packages",
+  "type": "library",
+  "keywords": [
+    "switon",
+    "testing",
+    "phpunit",
+    "bootstrap"
+  ],
+  "homepage": "https://github.com/switon-php/testing",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "switon",
+      "email": "admin@switon.dev"
+    }
+  ],
+  "support": {
+    "source": "https://github.com/switon-php/testing",
+    "issues": "https://github.com/switon-php/testing/issues",
+    "docs": "https://docs.switon.dev/latest/testing"
+  },
+  "require": {
+    "php": ">=8.3",
+    "psr/container": "^2.0",
+    "psr/event-dispatcher": "^1.0",
+    "psr/log": "^2.0",
+    "psr/simple-cache": "^3.0",
+    "switon/core": "^1.0",
+    "switon/di": "^1.0",
+    "switon/event": "^1.0",
+    "phpunit/phpunit": "^12.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Switon\\Testing\\": "src/"
+    }
+  }
+}
