@@ -11,6 +11,7 @@ use function dirname;
 use function file_exists;
 use function glob;
 use function is_array;
+use function is_dir;
 use function is_string;
 
 /**
@@ -42,48 +43,68 @@ class ComposerExtra extends CoreComposerExtra
         }
 
         $repoRoot = $this->detectRepoRoot(__DIR__);
-        $globPath = $this->packageComposerGlobPath($repoRoot);
-
-        $data = [];
-        foreach (glob($globPath) ?: [] as $composerJson) {
-            $json = file_get_contents($composerJson);
-            if ($json === false) {
-                continue;
-            }
-
-            $parsed = json_decode($json, true);
-            if (!is_array($parsed)) {
-                continue;
-            }
-
-            $name = $parsed['name'] ?? null;
-            if (!is_string($name) || $name === '') {
-                continue;
-            }
-
-            $extra = $parsed['extra'] ?? [];
-            if (!is_array($extra)) {
-                $extra = [];
-            }
-
-            $data[$name] = $extra;
-        }
+        $globPaths = $this->packageComposerGlobPaths($repoRoot);
+        $data = $this->loadFromComposerJsonGlobs($globPaths);
 
         if ($data === []) {
-            RuntimeException::raise('Failed to discover composer extra: no packages found at {path}', ['path' => $globPath]);
+            RuntimeException::raise('Failed to discover composer extra: no packages found under {path}', [
+                'path' => $repoRoot,
+            ]);
         }
 
         return $data;
     }
 
-    protected function packageComposerGlobPath(string $repoRoot): string
+    /**
+     * @return list<string>
+     */
+    protected function packageComposerGlobPaths(string $repoRoot): array
     {
         $packagesDir = $repoRoot . '/packages';
         if (is_dir($packagesDir)) {
-            return $packagesDir . '/*/composer.json';
+            return [$packagesDir . '/*/composer.json'];
         }
 
-        return $repoRoot . '/*/composer.json';
+        return [
+            $repoRoot . '/vendor/*/*/composer.json',
+            $repoRoot . '/*/composer.json',
+        ];
+    }
+
+    /**
+     * @param list<string> $globPaths
+     * @return array<string, array<string, mixed>>
+     */
+    protected function loadFromComposerJsonGlobs(array $globPaths): array
+    {
+        $data = [];
+        foreach ($globPaths as $globPath) {
+            foreach (glob($globPath) ?: [] as $composerJson) {
+                $json = file_get_contents($composerJson);
+                if ($json === false) {
+                    continue;
+                }
+
+                $parsed = json_decode($json, true);
+                if (!is_array($parsed)) {
+                    continue;
+                }
+
+                $name = $parsed['name'] ?? null;
+                if (!is_string($name) || $name === '') {
+                    continue;
+                }
+
+                $extra = $parsed['extra'] ?? [];
+                if (!is_array($extra)) {
+                    $extra = [];
+                }
+
+                $data[$name] = $extra;
+            }
+        }
+
+        return $data;
     }
 
     /**
