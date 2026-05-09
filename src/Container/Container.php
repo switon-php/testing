@@ -24,7 +24,6 @@ use Switon\Core\ServiceProviderInterface;
 use Switon\Core\Filesystem;
 use Switon\Core\PathAlias;
 use Switon\Core\SceneManager;
-use Switon\ComposerExtra\ComposerExtra as RuntimeComposerExtra;
 use Switon\ComposerExtra\ComposerExtraInterface;
 use Switon\Di\Container as DiContainer;
 use Switon\Di\ServiceProvider as DiServiceProvider;
@@ -167,9 +166,9 @@ class Container extends DiContainer
         }
 
         // Bind ComposerExtra in the container so other code (e.g. kernel ServiceBootstrapper) can reuse it.
-        // Prefer vendor/switon/composer-extra.json; fall back to scanning packages/*/composer.json in monorepo.
+        // Use testing-aware loader to support split package CI where vendor cache may be absent.
         if (!isset($this->definitions[ComposerExtraInterface::class])) {
-            $extra = new RuntimeComposerExtra();
+            $extra = new ComposerExtra();
             $this->set(ComposerExtraInterface::class, $extra);
         }
 
