@@ -143,15 +143,19 @@ class ComposerExtra extends CoreComposerExtra
     protected function detectRepoRoot(string $startDir): string
     {
         $dir = realpath($startDir) ?: $startDir;
+        $nearestComposerRoot = null;
 
         while (true) {
             if (is_dir($dir . '/packages')) {
                 return $dir;
             }
+            if (file_exists($dir . '/composer.json')) {
+                $nearestComposerRoot = $dir;
+            }
 
             $parent = dirname($dir);
             if ($parent === $dir) {
-                return dirname(__DIR__, 2);
+                return $nearestComposerRoot ?? dirname(__DIR__);
             }
             $dir = $parent;
         }
