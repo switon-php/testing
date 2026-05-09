@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Switon\Testing;
 
+use Composer\InstalledVersions;
 use Switon\ComposerExtra\ComposerExtra as CoreComposerExtra;
 use Switon\Core\Exception\RuntimeException;
 use function dirname;
@@ -32,6 +33,11 @@ class ComposerExtra extends CoreComposerExtra
         if (file_exists($this->cacheFile)) {
             /** @var array<string, array<string, mixed>> $data */
             $data = parent::loadCache();
+            return $data;
+        }
+
+        $data = $this->loadFromInstalledVersions();
+        if ($data !== []) {
             return $data;
         }
 
@@ -70,6 +76,38 @@ class ComposerExtra extends CoreComposerExtra
         return $data;
     }
 
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    protected function loadFromInstalledVersions(): array
+    {
+        if (!class_exists(InstalledVersions::class)) {
+            return [];
+        }
+
+        $extra = [];
+        foreach (InstalledVersions::getAllRawData() as $sourceData) {
+            if (!isset($sourceData['versions']) || !is_array($sourceData['versions'])) {
+                continue;
+            }
+
+            foreach ($sourceData['versions'] as $packageName => $packageInfo) {
+                if (!is_array($packageInfo)) {
+                    continue;
+                }
+
+                $packageExtra = $packageInfo['extra'] ?? null;
+                if (!is_array($packageExtra) || $packageExtra === []) {
+                    continue;
+                }
+
+                $extra[$packageName] = $packageExtra;
+            }
+        }
+
+        return $extra;
+    }
+
     protected function detectRepoRoot(string $startDir): string
     {
         $dir = realpath($startDir) ?: $startDir;
@@ -81,8 +119,7 @@ class ComposerExtra extends CoreComposerExtra
 
             $parent = dirname($dir);
             if ($parent === $dir) {
-                // best effort: fall back to going up from packages/testing/src
-                return dirname(__DIR__, 3);
+                return dirname(__DIR__, 1);
             }
             $dir = $parent;
         }
