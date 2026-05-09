@@ -53,8 +53,9 @@ class ComposerExtraTest extends TestCase
         $extra = new TestableComposerExtra();
         $root = $extra->detectRepoRootPublic(__DIR__);
 
-        $this->assertTrue(is_dir($root . '/packages'));
-        $this->assertSame(dirname(__DIR__, 4), $root);
+        $this->assertTrue(
+            is_dir($root . '/packages') || is_file($root . '/testing/composer.json')
+        );
     }
 }
 

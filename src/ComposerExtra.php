@@ -42,7 +42,7 @@ class ComposerExtra extends CoreComposerExtra
         }
 
         $repoRoot = $this->detectRepoRoot(__DIR__);
-        $globPath = $repoRoot . '/packages/*/composer.json';
+        $globPath = $this->packageComposerGlobPath($repoRoot);
 
         $data = [];
         foreach (glob($globPath) ?: [] as $composerJson) {
@@ -74,6 +74,16 @@ class ComposerExtra extends CoreComposerExtra
         }
 
         return $data;
+    }
+
+    protected function packageComposerGlobPath(string $repoRoot): string
+    {
+        $packagesDir = $repoRoot . '/packages';
+        if (is_dir($packagesDir)) {
+            return $packagesDir . '/*/composer.json';
+        }
+
+        return $repoRoot . '/*/composer.json';
     }
 
     /**
