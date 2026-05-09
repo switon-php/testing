@@ -38,13 +38,14 @@ class ComposerExtra extends CoreComposerExtra
         }
 
         $data = $this->loadFromInstalledVersions();
-        if ($data !== []) {
-            return $data;
-        }
 
         $repoRoot = $this->detectRepoRoot(__DIR__);
         $globPaths = $this->packageComposerGlobPaths($repoRoot);
-        $data = $this->loadFromComposerJsonGlobs($globPaths);
+        $manifestData = $this->loadFromComposerJsonGlobs($globPaths);
+        if ($manifestData !== []) {
+            // Keep InstalledVersions as fast source, but backfill missing entries from composer manifests.
+            $data = $manifestData + $data;
+        }
 
         if ($data === []) {
             RuntimeException::raise('Failed to discover composer extra: no packages found under {path}', [

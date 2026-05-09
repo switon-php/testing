@@ -7,9 +7,6 @@ namespace Switon\Testing\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use Switon\Testing\ComposerExtra;
 use function bin2hex;
-use function chdir;
-use function file_put_contents;
-use function getcwd;
 use function is_array;
 use function is_dir;
 use function is_file;
@@ -65,7 +62,7 @@ class ComposerExtraTest extends TestCase
     public function testAllFallsBackToVendorComposerDiscoveryInSplitRepo(): void
     {
         $sandbox = sys_get_temp_dir() . '/switon-testing-extra-' . bin2hex(random_bytes(4));
-        $vendorPackageDir = $sandbox . '/vendor/switon/core';
+        $vendorPackageDir = $sandbox . '/vendor/acme/split-fixture';
         $vendorComposer = $vendorPackageDir . '/composer.json';
         $projectComposer = $sandbox . '/composer.json';
 
@@ -73,36 +70,30 @@ class ComposerExtraTest extends TestCase
         file_put_contents(
             $vendorComposer,
             (string)json_encode([
-                'name' => 'switon/core',
+                'name' => 'acme/split-fixture',
                 'extra' => [
                     'switon' => [
-                        'providers' => ['Switon\\Core\\ServiceProvider'],
+                        'providers' => ['Acme\\SplitFixture\\ServiceProvider'],
                     ],
                 ],
             ], JSON_THROW_ON_ERROR)
         );
         file_put_contents($projectComposer, (string)json_encode(['name' => 'switon/testing'], JSON_THROW_ON_ERROR));
 
-        $cwd = getcwd();
-        if ($cwd !== false) {
-            chdir($sandbox);
-        }
-
         try {
             $cacheFile = $sandbox . '/missing-composer-extra.json';
-            $extra = new ComposerExtra($cacheFile);
+            $extra = new SplitRepoComposerExtraFixture($cacheFile, $sandbox);
             $all = $extra->all();
-            $this->assertArrayHasKey('switon/core', $all);
-            $this->assertTrue(is_array($all['switon/core']));
+            $this->assertArrayHasKey('acme/split-fixture', $all);
+            $this->assertSame(
+                ['Acme\\SplitFixture\\ServiceProvider'],
+                $extra->getClasses('switon.providers', 'acme/split-fixture')
+            );
         } finally {
-            if ($cwd !== false) {
-                chdir($cwd);
-            }
-
             @unlink($vendorComposer);
             @unlink($projectComposer);
             @rmdir($vendorPackageDir);
-            @rmdir($sandbox . '/vendor/switon');
+            @rmdir($sandbox . '/vendor/acme');
             @rmdir($sandbox . '/vendor');
             @rmdir($sandbox);
         }
@@ -114,5 +105,18 @@ class TestableComposerExtra extends ComposerExtra
     public function detectRepoRootPublic(string $startDir): string
     {
         return $this->detectRepoRoot($startDir);
+    }
+}
+
+class SplitRepoComposerExtraFixture extends ComposerExtra
+{
+    public function __construct(string $cacheFile, protected string $repoRoot)
+    {
+        parent::__construct($cacheFile);
+    }
+
+    protected function detectRepoRoot(string $startDir): string
+    {
+        return $this->repoRoot;
     }
 }
