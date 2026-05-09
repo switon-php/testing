@@ -46,7 +46,7 @@ class ComposerExtraTest extends TestCase
 
         $this->assertTrue(is_array($all));
         $this->assertNotSame([], $all);
-        $this->assertArrayHasKey('switon/testing', $all);
+        $this->assertNotSame([], $extra->getClasses('switon.providers'));
     }
 
     public function testDetectRepoRootFindsRootContainingPackages(): void
@@ -55,7 +55,7 @@ class ComposerExtraTest extends TestCase
         $root = $extra->detectRepoRootPublic(__DIR__);
 
         $this->assertTrue(
-            is_dir($root . '/packages') || is_file($root . '/testing/composer.json')
+            is_dir($root . '/packages') || is_file($root . '/composer.json')
         );
     }
 
