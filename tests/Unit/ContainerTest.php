@@ -13,6 +13,7 @@ use Switon\Testing\Container\Container;
 use Switon\Testing\InMemoryContextManager;
 use Switon\Testing\Mock\MockConsole;
 use function class_exists;
+use function substr;
 
 class ContainerTest extends TestCase
 {
@@ -49,8 +50,9 @@ class ContainerTest extends TestCase
 
     public function testPrebindsInputInterfaceFromComposerExtra(): void
     {
-        if (!interface_exists(InputInterface::class)) {
-            $this->markTestSkipped('Current switon/core release does not expose InputInterface.');
+        $defaultInputClass = substr(InputInterface::class, 0, -9);
+        if (!interface_exists(InputInterface::class) || !class_exists($defaultInputClass)) {
+            $this->markTestSkipped('Current core release cannot auto-resolve InputInterface to a default Input class.');
         }
 
         $container = new Container();
