@@ -119,7 +119,7 @@ class ComposerExtra extends CoreComposerExtra
 
             $parent = dirname($dir);
             if ($parent === $dir) {
-                return dirname(__DIR__, 1);
+                return dirname(__DIR__, 2);
             }
             $dir = $parent;
         }
