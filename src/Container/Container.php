@@ -21,6 +21,7 @@ use Switon\Core\PathAliasInterface;
 use Switon\Core\RandomInterface;
 use Switon\Core\SceneManagerInterface;
 use Switon\Core\ServiceProviderInterface;
+use Switon\Core\TranslatorInterface;
 use Switon\Core\Filesystem;
 use Switon\Core\PathAlias;
 use Switon\Core\SceneManager;
@@ -36,6 +37,7 @@ use Switon\Testing\ComposerExtra;
 use Switon\Testing\EventDispatcher as TestEventDispatcher;
 use Switon\Testing\InMemoryContextManager;
 use Switon\Testing\Mock\MockConsole;
+use Switon\Testing\Mock\StubTranslator;
 use Switon\Testing\MockLogger;
 use Switon\Testing\MockRandom;
 
@@ -43,7 +45,7 @@ use Switon\Testing\MockRandom;
  * Preconfigured DI container for package and component tests.
  *
  * Use when tests need framework-like wiring with built-in defaults
- * (mock logger/console/random, test event dispatcher, in-memory context storage, real filesystem/class scanning/clock/app bindings).
+ * (mock logger/console/random, stub translator, test event dispatcher, in-memory context storage, real filesystem/class scanning/clock/app bindings).
  * Additional test doubles such as `MockClock`, `MockListenerProvider`, and `MockCache`
  * are available for manual binding in test setup; they are not preconfigured here by default.
  *
@@ -87,6 +89,10 @@ class Container extends DiContainer
         // Use MockLogger directly - even if verification isn't needed, collected data can be ignored
         if (!isset($this->definitions[LoggerInterface::class])) {
             $this->set(LoggerInterface::class, new MockLogger());
+        }
+
+        if (!isset($this->definitions[TranslatorInterface::class])) {
+            $this->set(TranslatorInterface::class, StubTranslator::class);
         }
 
         // Pre-configure PathAliasInterface (if user didn't provide in definitions)
