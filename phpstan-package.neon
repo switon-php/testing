@@ -1,0 +1,14 @@
+parameters:
+    excludePaths:
+        analyse:
+            - src/ComposerExtra.php
+    ignoreErrors:
+        -
+            identifier: missingType.iterableValue
+            path: src/Mock/MockConsole.php
+        -
+            identifier: missingType.iterableValue
+            path: src/MockListenerProvider.php
+        -
+            identifier: argument.type
+            path: src/TestCase.php
