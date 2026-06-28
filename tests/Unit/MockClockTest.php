@@ -29,6 +29,25 @@ class MockClockTest extends TestCase
         $this->assertSame(1001.25, $clock->microtime());
     }
 
+    public function testElapsedReturnsRoundedDeltaSinceStartedAt(): void
+    {
+        $clock = new MockClock(1000.0);
+        $startedAt = $clock->now();
+
+        $clock->advance(1.2345);
+
+        $this->assertSame(1.235, $clock->elapsed($startedAt));
+        $this->assertSame(1.23, $clock->elapsed($startedAt, 2));
+    }
+
+    public function testNowReturnsRoundedCurrentTimestamp(): void
+    {
+        $clock = new MockClock(1000.1234);
+
+        $this->assertSame(1000.123, $clock->now());
+        $this->assertSame(1000.12, $clock->now(2));
+    }
+
     public function testSetTimeOverridesCurrentClockValue(): void
     {
         $clock = new MockClock(1000.0);

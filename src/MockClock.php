@@ -6,6 +6,7 @@ namespace Switon\Testing;
 
 use Switon\Core\ClockInterface;
 
+use function round;
 use function time;
 
 /**
@@ -14,7 +15,7 @@ use function time;
  * Use when code depends on `ClockInterface` and tests must advance or set time explicitly.
  *
  * Road-signs:
- * - time()/microtime() for production-style reads
+ * - time()/microtime()/now()/elapsed() for production-style reads
  * - advance() and setTime() for test control
  *
  * @see \Switon\Core\ClockInterface
@@ -49,6 +50,22 @@ class MockClock implements ClockInterface
     public function microtime(): float
     {
         return $this->currentTime;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function now(int $precision = 3): float
+    {
+        return round($this->microtime(), $precision);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function elapsed(float $startedAt, int $precision = 3): float
+    {
+        return round($this->microtime() - $startedAt, $precision);
     }
 
     /**
