@@ -23,9 +23,14 @@ final class MockListenerProviderTest extends TestCase
 
         self::assertSame([], iterator_to_array($provider->getListenersForEvent(new stdClass())));
         self::assertSame([], iterator_to_array($provider->getListenersForWildcard()));
+        self::assertSame([], iterator_to_array($provider->getListenersForSender(new stdClass())));
         self::assertSame(
             $provider->getListenersForEvent(new stdClass()),
             $provider->getListenersForWildcard()
+        );
+        self::assertSame(
+            $provider->getListenersForEvent(new stdClass()),
+            $provider->getListenersForSender(new stdClass())
         );
     }
 
@@ -33,7 +38,7 @@ final class MockListenerProviderTest extends TestCase
     {
         $provider = new MockListenerProvider();
 
-        $provider->on('SomeEvent', static function (): void {
+        $provider->on(null, static function (object $event): void {
         });
         $provider->register(static function (): void {
         });

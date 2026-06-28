@@ -27,7 +27,7 @@ class MockListenerProvider implements ListenerProviderInterface
         $this->emptyListeners = new PrioritizedListeners();
     }
 
-    public function on(string $event, callable $handler, int $priority = 0): void
+    public function on(?object $sender, callable $handler, int $priority = 0): void
     {
         // No-op: ignore listener registration
     }
@@ -48,6 +48,11 @@ class MockListenerProvider implements ListenerProviderInterface
     }
 
     public function getListenersForWildcard(): PrioritizedListeners
+    {
+        return $this->emptyListeners;
+    }
+
+    public function getListenersForSender(object $event): PrioritizedListeners
     {
         return $this->emptyListeners;
     }
