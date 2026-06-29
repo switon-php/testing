@@ -71,7 +71,7 @@ class MockClock implements ClockInterface
     /**
      * Advances current time by the given number of seconds.
      */
-    public function advance(float $seconds): self
+    public function advance(float $seconds): static
     {
         $this->currentTime += $seconds;
         return $this;
@@ -80,9 +80,19 @@ class MockClock implements ClockInterface
     /**
      * Sets current time to a specific timestamp.
      */
-    public function setTime(float|int $timestamp): self
+    public function setTime(float|int $timestamp): static
     {
         $this->currentTime = (float)$timestamp;
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Advances virtual time without blocking.
+     */
+    public function sleep(float $seconds): void
+    {
+        $this->advance($seconds);
     }
 }
