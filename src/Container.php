@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Switon\Testing;
 
+use Composer\Autoload\ClassLoader;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface as PsrEventDispatcherInterface;
 use Psr\EventDispatcher\ListenerProviderInterface as PsrListenerProviderInterface;
@@ -146,7 +147,7 @@ class Container extends DiContainer
         $resourceAliasRegistrar = $this->make(ResourceAliasRegistrar::class);
 
         foreach ($providerClasses as $providerClass) {
-            if (!class_exists($providerClass)) {
+            if (!is_string($providerClass) || $providerClass === '' || !$this->canAutoloadClass($providerClass)) {
                 continue;
             }
 
@@ -221,6 +222,37 @@ class Container extends DiContainer
         }
     }
 
+    protected function canAutoloadClass(string $class): bool
+    {
+        if (class_exists($class, false)) {
+            return true;
+        }
+
+        $loader = $this->composerClassLoader();
+        if ($loader === null) {
+            return false;
+        }
+
+        $file = $loader->findFile($class);
+
+        return is_string($file) && is_file($file);
+    }
+
+    protected function composerClassLoader(): ?ClassLoader
+    {
+        foreach (spl_autoload_functions() as $autoload) {
+            if (!is_array($autoload)) {
+                continue;
+            }
+
+            if ($autoload[0] instanceof ClassLoader) {
+                return $autoload[0];
+            }
+        }
+
+        return null;
+    }
+
     protected function setupEventSystem(): void
     {
         if (!isset($this->definitions[RealEventDispatcher::class])) {
@@ -245,7 +277,7 @@ class Container extends DiContainer
     /**
      * Disable event dispatching while keeping collected events available.
      */
-    public function disableEventDispatching(): self
+    public function disableEventDispatching(): static
     {
         $dispatcher = $this->get(EventDispatcherInterface::class);
         if ($dispatcher instanceof TestEventDispatcher) {
@@ -258,7 +290,7 @@ class Container extends DiContainer
     /**
      * Enable event dispatching.
      */
-    public function enableEventDispatching(): self
+    public function enableEventDispatching(): static
     {
         $dispatcher = $this->get(EventDispatcherInterface::class);
         if ($dispatcher instanceof TestEventDispatcher) {

@@ -30,11 +30,66 @@ class ComposerExtraTest extends TestCase
 
         try {
             $extra = new ComposerExtra($cacheFile);
-            $this->assertSame($expected, $extra->all());
+            $all = $extra->all();
             $this->assertSame(['switon' => ['providers' => ['A\\Provider']]], $extra->get('vendor/pkg'));
             $this->assertTrue($extra->has('vendor/pkg'));
+            $this->assertArrayHasKey('vendor/pkg', $all);
+            // Local composer.json discovery may add more packages on top of the cache.
+            $this->assertGreaterThanOrEqual(1, count($all));
         } finally {
             @unlink($cacheFile);
+        }
+    }
+
+    public function testAllBackfillsLocalComposerJsonOverStaleCache(): void
+    {
+        $cacheFile = sys_get_temp_dir() . '/composer-extra-stale-' . bin2hex(random_bytes(4)) . '.json';
+        file_put_contents($cacheFile, (string)json_encode([
+            'vendor/old' => ['switon' => ['providers' => ['Old\\Provider']]],
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $extra = new ComposerExtra($cacheFile);
+            $all = $extra->all();
+            $this->assertArrayHasKey('vendor/old', $all);
+        } finally {
+            @unlink($cacheFile);
+        }
+    }
+
+    public function testCollectIgnoresPackagesWhoseInstallPathIsMissing(): void
+    {
+        $extra = new ComposerExtra();
+        $providers = $extra->collect('switon.providers');
+
+        $this->assertNotContains('Switon\\Agency\\ServiceProvider', $providers);
+        $this->assertNotContains('Switon\\Tui\\ServiceProvider', $providers);
+        $this->assertContains('Switon\\Http\\ServiceProvider', $providers);
+    }
+
+    public function testLoadFromComposerJsonGlobsSkipsUnreadableComposerJson(): void
+    {
+        $sandbox = sys_get_temp_dir() . '/switon-testing-unreadable-' . bin2hex(random_bytes(4));
+        $packagesDir = $sandbox . '/packages';
+        mkdir($packagesDir . '/unreadable', 0777, true);
+        $composerJson = $packagesDir . '/unreadable/composer.json';
+        file_put_contents($composerJson, '{"name":"acme/unreadable","extra":{}}');
+        chmod($composerJson, 0o000);
+
+        try {
+            if (!is_readable($composerJson)) {
+                $extra = new TestableComposerExtra();
+                $data = $extra->loadFromComposerJsonGlobsPublic([$packagesDir . '/*/composer.json']);
+                $this->assertSame([], $data);
+            } else {
+                $this->markTestSkipped('Cannot create unreadable composer.json on this filesystem');
+            }
+        } finally {
+            @chmod($composerJson, 0o644);
+            @unlink($composerJson);
+            @rmdir($packagesDir . '/unreadable');
+            @rmdir($packagesDir);
+            @rmdir($sandbox);
         }
     }
 
@@ -99,7 +154,7 @@ class ComposerExtraTest extends TestCase
         self::assertIsArray($extra->loadFromInstalledVersionsPublic());
     }
 
-    public function testAllFallsBackToMonorepoPackageDiscoveryWhenCacheFileMissing(): void
+    public function testAllFallsBackToPackageDiscoveryWhenCacheFileMissing(): void
     {
         $cacheFile = sys_get_temp_dir() . '/composer-extra-missing-' . bin2hex(random_bytes(4)) . '.json';
         $extra = new ComposerExtra($cacheFile);
@@ -119,6 +174,78 @@ class ComposerExtraTest extends TestCase
         $this->assertTrue(
             is_dir($root . '/packages') || is_file($root . '/composer.json')
         );
+    }
+
+    public function testDetectRepoRootFallsBackWhenFilesystemRootHasNoComposerManifest(): void
+    {
+        $extra = new TestableComposerExtra();
+        $this->assertSame(dirname(__DIR__, 2), $extra->detectRepoRootPublic('/'));
+    }
+
+    public function testFilterPackagesWithMissingInstallPathSkipsEmptyPackageNames(): void
+    {
+        $extra = new TestableComposerExtra();
+
+        $filtered = $extra->filterPackagesWithMissingInstallPathPublic([
+            '' => ['switon' => ['providers' => []]],
+            'valid/pkg' => ['switon' => ['providers' => ['Valid\\Provider']]],
+        ]);
+
+        $this->assertArrayHasKey('valid/pkg', $filtered);
+        $this->assertArrayNotHasKey('', $filtered);
+    }
+
+    public function testFilterPackagesWithMissingInstallPathSkipsAbsentInstallDirectories(): void
+    {
+        if (!class_exists(\Composer\InstalledVersions::class)) {
+            $this->markTestSkipped('Composer InstalledVersions is not available');
+        }
+
+        $packageName = 'switon/testing';
+        if (!\Composer\InstalledVersions::isInstalled($packageName)) {
+            $this->markTestSkipped('switon/testing is not installed in this workspace');
+        }
+
+        $installPath = \Composer\InstalledVersions::getInstallPath($packageName);
+        $hiddenPath = dirname($installPath) . '/.hidden-' . bin2hex(random_bytes(4));
+        $this->assertTrue(rename($installPath, $hiddenPath));
+
+        try {
+            $extra = new TestableComposerExtra();
+            $filtered = $extra->filterPackagesWithMissingInstallPathPublic([
+                $packageName => ['switon' => ['providers' => []]],
+            ]);
+            $this->assertArrayNotHasKey($packageName, $filtered);
+        } finally {
+            $this->assertTrue(rename($hiddenPath, $installPath));
+        }
+    }
+
+    public function testPackageComposerGlobPathsIncludesVendorDirectory(): void
+    {
+        $extra = new TestableComposerExtra();
+        $root = $extra->detectRepoRootPublic(__DIR__);
+        $paths = $extra->packageComposerGlobPathsPublic($root);
+
+        $this->assertContains($root . '/vendor/*/*/composer.json', $paths);
+    }
+
+    public function testPackageComposerGlobPathsIncludesRootComposerWhenPackagesDirMissing(): void
+    {
+        $sandbox = sys_get_temp_dir() . '/switon-testing-globs-' . bin2hex(random_bytes(4));
+        mkdir($sandbox, 0777, true);
+        file_put_contents($sandbox . '/composer.json', (string)json_encode(['name' => 'acme/alone'], JSON_THROW_ON_ERROR));
+
+        try {
+            $extra = new TestableComposerExtra();
+            $paths = $extra->packageComposerGlobPathsPublic($sandbox);
+
+            $this->assertContains($sandbox . '/composer.json', $paths);
+            $this->assertNotContains($sandbox . '/packages/*/composer.json', $paths);
+        } finally {
+            @unlink($sandbox . '/composer.json');
+            @rmdir($sandbox);
+        }
     }
 
     public function testAllFallsBackToVendorComposerDiscoveryInSplitRepo(): void
@@ -185,6 +312,24 @@ class TestableComposerExtra extends ComposerExtra
     public function loadFromInstalledVersionsPublic(): array
     {
         return $this->loadFromInstalledVersions();
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $data
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function filterPackagesWithMissingInstallPathPublic(array $data): array
+    {
+        return $this->filterPackagesWithMissingInstallPath($data);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function packageComposerGlobPathsPublic(string $repoRoot): array
+    {
+        return $this->packageComposerGlobPaths($repoRoot);
     }
 }
 

@@ -10,7 +10,7 @@ Switon's test bootstrap and fixtures for package-level tests.
 - **Common defaults:** core services and test doubles are prebound.
 - **Reusable test doubles:** logger, events, console, clock, cache, random, and translator are prebound.
 - **Listener support:** `MockListenerProvider` keeps event wiring lightweight in tests.
-- **Package-aware checks:** `ComposerExtra` and `PackagePathAssert` support monorepo discovery and path checks.
+- **Package-aware checks:** `ComposerExtra` and `PackagePathAssert` discover package layout (workspace, vendor, or split root).
 
 ## Installation
 

@@ -13,17 +13,20 @@ use function file_exists;
 use function glob;
 use function is_array;
 use function is_dir;
+use function is_file;
 use function is_string;
 
 /**
- * Test-friendly Composer extra loader with monorepo fallback.
+ * Test-friendly Composer extra loader with layout-agnostic discovery.
  *
- * Use when package tests run without `vendor/switon/composer-extra.json` and must discover
- * provider metadata directly from package `composer.json` files.
+ * Plugin cache (`vendor/switon/composer-extra.json`) may be missing or stale. Tests still need
+ * provider metadata whether packages live in a workspace (`packages/*`), under `vendor/`, or as a
+ * split package repo (root `composer.json`).
  *
  * Road-signs:
- * - loadCache() prefers real cache, then InstalledVersions, then composer.json globs
- * - detectRepoRoot() handles monorepo vs split package layouts
+ * - loadCache() merges: local composer.json manifests → InstalledVersions → plugin cache
+ * - packageComposerGlobPaths() unions workspace / vendor / split-root paths (no mono-only branch)
+ * - detectRepoRoot() finds the nearest install root
  *
  * @see \Switon\ComposerExtra\ComposerExtraInterface
  * @see \Switon\Testing\Container
@@ -35,22 +38,18 @@ class ComposerExtra extends CoreComposerExtra
      */
     protected function loadCache(): array
     {
-        // Prefer the real cache when available.
+        $data = [];
         if (file_exists($this->cacheFile)) {
             /** @var array<string, array<string, mixed>> $data */
             $data = parent::loadCache();
-            return $data;
         }
 
-        $data = $this->loadFromInstalledVersions();
-
+        $installed = $this->loadFromInstalledVersions();
         $repoRoot = $this->detectRepoRoot(__DIR__);
-        $globPaths = $this->packageComposerGlobPaths($repoRoot);
-        $manifestData = $this->loadFromComposerJsonGlobs($globPaths);
-        if ($manifestData !== []) {
-            // Keep InstalledVersions as fast source, but backfill missing entries from composer manifests.
-            $data = $manifestData + $data;
-        }
+        $manifestData = $this->loadFromComposerJsonGlobs($this->packageComposerGlobPaths($repoRoot));
+
+        // Local manifests win, then installed packages, then plugin cache (fill gaps only).
+        $data = $manifestData + $installed + $data;
 
         if ($data === []) {
             RuntimeException::raise('Failed to discover composer extra: no packages found under {path}', [
@@ -58,23 +57,61 @@ class ComposerExtra extends CoreComposerExtra
             ]);
         }
 
-        return $data;
+        return $this->filterPackagesWithMissingInstallPath($data);
     }
 
     /**
+     * Drop Composer metadata for path packages that are still listed in lock/installed data but absent on disk.
+     *
+     * @param array<string, array<string, mixed>> $data
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    protected function filterPackagesWithMissingInstallPath(array $data): array
+    {
+        if (!class_exists(InstalledVersions::class)) {
+            return $data;
+        }
+
+        $present = [];
+        foreach ($data as $packageName => $extra) {
+            if (!is_string($packageName) || $packageName === '') {
+                continue;
+            }
+
+            if (InstalledVersions::isInstalled($packageName)) {
+                $installPath = InstalledVersions::getInstallPath($packageName);
+                if ($installPath === null || !is_dir($installPath)) {
+                    continue;
+                }
+            }
+
+            $present[$packageName] = $extra;
+        }
+
+        return $present;
+    }
+
+    /**
+     * Composer.json locations for the current install layout (union, not exclusive).
+     *
      * @return list<string>
      */
     protected function packageComposerGlobPaths(string $repoRoot): array
     {
-        $packagesDir = $repoRoot . '/packages';
-        if (is_dir($packagesDir)) {
-            return [$packagesDir . '/*/composer.json'];
+        $paths = [];
+        if (is_dir($repoRoot . '/packages')) {
+            $paths[] = $repoRoot . '/packages/*/composer.json';
+        }
+        if (is_dir($repoRoot . '/vendor')) {
+            $paths[] = $repoRoot . '/vendor/*/*/composer.json';
+        }
+        // Split package under test: the package's own composer.json at repo root.
+        if (is_file($repoRoot . '/composer.json')) {
+            $paths[] = $repoRoot . '/composer.json';
         }
 
-        return [
-            $repoRoot . '/vendor/*/*/composer.json',
-            $repoRoot . '/*/composer.json',
-        ];
+        return $paths;
     }
 
     /**
@@ -87,7 +124,9 @@ class ComposerExtra extends CoreComposerExtra
         $data = [];
         foreach ($globPaths as $globPath) {
             foreach (glob($globPath) ?: [] as $composerJson) {
-                $json = file_get_contents($composerJson);
+                // Unreadable entries are skipped by design; suppress the E_WARNING so callers
+                // can distinguish "file missing/unreadable" from a real failure.
+                $json = @file_get_contents($composerJson);
                 if ($json === false) {
                     continue;
                 }
@@ -150,18 +189,27 @@ class ComposerExtra extends CoreComposerExtra
     {
         $dir = realpath($startDir) ?: $startDir;
         $nearestComposerRoot = null;
+        $nearestVendorProject = null;
 
         while (true) {
+            // Workspace root (multi-package tree).
             if (is_dir($dir . '/packages')) {
                 return $dir;
             }
-            if (file_exists($dir . '/composer.json')) {
+            // Split / app project root: remember, but keep walking in case a workspace is above.
+            if ($nearestVendorProject === null
+                && is_dir($dir . '/vendor')
+                && is_file($dir . '/composer.json')
+            ) {
+                $nearestVendorProject = $dir;
+            }
+            if (is_file($dir . '/composer.json')) {
                 $nearestComposerRoot = $dir;
             }
 
             $parent = dirname($dir);
             if ($parent === $dir) {
-                return $nearestComposerRoot ?? dirname(__DIR__);
+                return $nearestVendorProject ?? $nearestComposerRoot ?? dirname(__DIR__);
             }
             $dir = $parent;
         }
