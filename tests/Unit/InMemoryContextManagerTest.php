@@ -60,7 +60,7 @@ class InMemoryContextManagerTest extends TestCase
     }
 }
 
-final class InMemoryContextManagerTestComponent implements ContextAware
+class InMemoryContextManagerTestComponent implements ContextAware
 {
     public function getContext(): InMemoryContextManagerTestContext
     {
@@ -68,11 +68,11 @@ final class InMemoryContextManagerTestComponent implements ContextAware
     }
 }
 
-final class InMemoryContextManagerTestContext
+class InMemoryContextManagerTestContext
 {
 }
 
-final class InMemoryContextManagerUnionReturnComponent implements ContextAware
+class InMemoryContextManagerUnionReturnComponent implements ContextAware
 {
     public function getContext(): InMemoryContextManagerTestContext|stdClass
     {

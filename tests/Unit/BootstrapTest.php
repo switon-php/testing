@@ -20,7 +20,7 @@ use function mkdir;
 use function random_bytes;
 use function sys_get_temp_dir;
 
-final class BootstrapTest extends TestCase
+class BootstrapTest extends TestCase
 {
     public function testBootstrapRegistersPackageAutoloadsFromMonorepoLayout(): void
     {
@@ -93,7 +93,7 @@ final class BootstrapTest extends TestCase
         }
     }
 
-    private function removeTree(string $path): void
+    protected function removeTree(string $path): void
     {
         if (!is_dir($path)) {
             return;

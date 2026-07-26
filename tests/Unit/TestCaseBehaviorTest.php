@@ -11,7 +11,7 @@ use Switon\Eventing\EventDispatcherInterface;
 use Switon\Testing\MockLogger;
 use Switon\Testing\TestCase as SwitonTestCase;
 
-final class TestCaseBehaviorTest extends SwitonTestCase
+class TestCaseBehaviorTest extends SwitonTestCase
 {
     #[Autowired] protected MockLogger $logger;
 
@@ -53,14 +53,14 @@ final class TestCaseBehaviorTest extends SwitonTestCase
     }
 }
 
-final class TestCaseMarkerService
+class TestCaseMarkerService
 {
     public function __construct(public string $value)
     {
     }
 }
 
-final class TestCaseMakeWithParametersFixture
+class TestCaseMakeWithParametersFixture
 {
     public function __construct(public string $token = 'default')
     {

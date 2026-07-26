@@ -7,7 +7,7 @@ namespace Switon\Testing\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use Switon\Testing\Mock\MockConsole;
 
-final class MockConsoleTest extends TestCase
+class MockConsoleTest extends TestCase
 {
     public function testWriteLnAndLevelHelpersCaptureLines(): void
     {

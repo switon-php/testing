@@ -12,7 +12,7 @@ use ReflectionClass;
  *
  * Use when package tests must assert resource path resolution without hard-coding repo shape.
  */
-final class PackagePathAssert
+class PackagePathAssert
 {
     /**
      * Assert a resolved path equals `{package root}/{relative}` where package root is derived from a class under `src/`.

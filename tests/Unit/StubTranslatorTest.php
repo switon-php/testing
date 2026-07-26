@@ -7,7 +7,7 @@ namespace Switon\Testing\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use Switon\Testing\Mock\StubTranslator;
 
-final class StubTranslatorTest extends TestCase
+class StubTranslatorTest extends TestCase
 {
     public function testTranslateReturnsKeyUnchanged(): void
     {

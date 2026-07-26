@@ -11,7 +11,7 @@ use Switon\Core\TranslatorInterface;
  *
  * Returns translation keys unchanged and reports no catalog hits.
  */
-final class StubTranslator implements TranslatorInterface
+class StubTranslator implements TranslatorInterface
 {
     public function translate(string $id, array $bind = [], bool $useICU = false): string
     {

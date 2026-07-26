@@ -7,7 +7,7 @@ namespace Switon\Testing\Tests\Unit;
 use PHPUnit\Framework\TestCase;
 use Switon\Testing\Mock\MockCache;
 
-final class MockCacheTest extends TestCase
+class MockCacheTest extends TestCase
 {
     public function testGetReturnsDefaultWhenKeyMissing(): void
     {

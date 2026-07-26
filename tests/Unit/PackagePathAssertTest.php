@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Switon\Testing\PackagePathAssert;
 use ReflectionClass;
 
-final class PackagePathAssertTest extends TestCase
+class PackagePathAssertTest extends TestCase
 {
     public function testAssertSameAsPackagePathPassesWhenResolvedMatchesRelative(): void
     {

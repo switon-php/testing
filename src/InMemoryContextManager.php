@@ -20,7 +20,7 @@ use stdClass;
  * @see \Switon\Core\ContextManagerInterface
  * @see \Switon\Testing\Container
  */
-final class InMemoryContextManager implements ContextManagerInterface
+class InMemoryContextManager implements ContextManagerInterface
 {
     /** @var array<int, object> */
     protected array $contexts = [];

@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LogLevel;
 use Switon\Testing\MockLogger;
 
-final class MockLoggerTest extends TestCase
+class MockLoggerTest extends TestCase
 {
     public function testLogRecordsLevelMessageAndContext(): void
     {
