@@ -79,7 +79,7 @@ class EventDispatcher implements EventDispatcherInterface
     /**
      * Enables or disables listener dispatching.
      */
-    public function setDispatchEvents(bool $enable): self
+    public function setDispatchEvents(bool $enable): static
     {
         $this->dispatchEvents = $enable;
         return $this;

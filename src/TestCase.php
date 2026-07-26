@@ -60,9 +60,9 @@ abstract class TestCase extends BaseTestCase implements MakerInterface
      *
      * This is the default behavior - events are both collected and dispatched to listeners.
      *
-     * @return self For method chaining
+     * @return static For method chaining
      */
-    protected function enableEventDispatching(): self
+    protected function enableEventDispatching(): static
     {
         $this->container->enableEventDispatching();
         return $this;
@@ -74,9 +74,9 @@ abstract class TestCase extends BaseTestCase implements MakerInterface
      * When disabled, events are collected but not dispatched to listeners.
      * This is equivalent to a no-op dispatcher, but still allows event verification.
      *
-     * @return self For method chaining
+     * @return static For method chaining
      */
-    protected function disableEventDispatching(): self
+    protected function disableEventDispatching(): static
     {
         $this->container->disableEventDispatching();
         return $this;
