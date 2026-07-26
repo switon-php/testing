@@ -59,6 +59,15 @@ class MockClockTest extends TestCase
         $this->assertSame(42.5, $clock->microtime());
     }
 
+    public function testSleepAdvancesVirtualTimeWithoutBlocking(): void
+    {
+        $clock = new MockClock(1000.0);
+
+        $clock->sleep(2.5);
+
+        $this->assertSame(1002.5, $clock->microtime());
+    }
+
     public function testConstructorWithoutArgumentStartsNearSystemTime(): void
     {
         $before = time();

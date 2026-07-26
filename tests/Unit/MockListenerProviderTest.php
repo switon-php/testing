@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Switon\Testing\MockListenerProvider;
 use stdClass;
 
-final class MockListenerProviderTest extends TestCase
+class MockListenerProviderTest extends TestCase
 {
     public function testGetListenersIsEmpty(): void
     {
@@ -32,6 +32,14 @@ final class MockListenerProviderTest extends TestCase
             $provider->getListenersForEvent(new stdClass()),
             $provider->getListenersForSender(new stdClass())
         );
+    }
+
+    public function testRegistrySnapshotsStayEmpty(): void
+    {
+        $provider = new MockListenerProvider();
+
+        self::assertSame([], $provider->getObservabilityListenerRegistry());
+        self::assertSame([], $provider->getBusinessListenerRegistry());
     }
 
     public function testOnAndRegisterAreNoOps(): void
