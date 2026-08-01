@@ -19,7 +19,7 @@
     "support": {
         "source": "https://github.com/switon-php/testing",
         "issues": "https://github.com/switon-php/testing/issues",
-        "docs": "https://docs.switon.dev/latest/testing"
+        "docs": "https://github.com/switon-php/testing/blob/main/docs/README.md"
     },
     "require": {
         "php": ">=8.3",

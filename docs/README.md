@@ -141,4 +141,4 @@ Any set value disables auto-registration.
 
 - **Need setup questions answered quickly:** [FAQ](faq.md#testing-faq)
 - **Need design trade-offs:** [Design Rationale](design.md#design-rationale)
-- **Need database test patterns:** [Testing Database Code](../../db/docs/testing.md#testing-database-code)
+- **Need database test patterns:** [Testing Database Code](https://github.com/switon-php/db/blob/main/docs/testing.md#testing-database-code)

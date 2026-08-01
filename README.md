@@ -36,7 +36,7 @@ final class UserServiceTest extends TestCase
 }
 ```
 
-Docs: https://docs.switon.dev/latest/testing
+Docs: https://github.com/switon-php/testing/blob/main/docs/README.md
 
 ## License
 

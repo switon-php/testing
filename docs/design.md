@@ -6,7 +6,7 @@
 
 - [Testing Package](README.md) — setup, runner usage, and defaults
 - [FAQ](faq.md#testing-faq) — short answers to common setup questions
-- [Testing Database Code](../../db/docs/testing.md#testing-database-code) — database-focused test patterns
+- [Testing Database Code](https://github.com/switon-php/db/blob/main/docs/testing.md#testing-database-code) — database-focused test patterns
 
 ---
 
