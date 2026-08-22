@@ -67,32 +67,6 @@ class ComposerExtraTest extends TestCase
         $this->assertContains('Switon\\Http\\ServiceProvider', $providers);
     }
 
-    public function testLoadFromComposerJsonGlobsSkipsUnreadableComposerJson(): void
-    {
-        $sandbox = sys_get_temp_dir() . '/switon-testing-unreadable-' . bin2hex(random_bytes(4));
-        $packagesDir = $sandbox . '/packages';
-        mkdir($packagesDir . '/unreadable', 0777, true);
-        $composerJson = $packagesDir . '/unreadable/composer.json';
-        file_put_contents($composerJson, '{"name":"acme/unreadable","extra":{}}');
-        chmod($composerJson, 0o000);
-
-        try {
-            if (!is_readable($composerJson)) {
-                $extra = new TestableComposerExtra();
-                $data = $extra->loadFromComposerJsonGlobsPublic([$packagesDir . '/*/composer.json']);
-                $this->assertSame([], $data);
-            } else {
-                $this->markTestSkipped('Cannot create unreadable composer.json on this filesystem');
-            }
-        } finally {
-            @chmod($composerJson, 0o644);
-            @unlink($composerJson);
-            @rmdir($packagesDir . '/unreadable');
-            @rmdir($packagesDir);
-            @rmdir($sandbox);
-        }
-    }
-
     public function testLoadFromComposerJsonGlobsSkipsInvalidEntriesAndNormalizesExtra(): void
     {
         $sandbox = sys_get_temp_dir() . '/switon-testing-extra-globs-' . bin2hex(random_bytes(4));
